@@ -41,5 +41,9 @@ sequelize.define('pokemon', {
         allowNull: false,
         defaultValue:true,
     }
+    },
+    {
+        timestamps: false,
+        freezeTableName: true,
     });
 };

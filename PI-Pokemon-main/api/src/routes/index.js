@@ -5,6 +5,7 @@ const axios = require('axios');
 const router = Router();
 const {Types, Pokemon, pokemon_types}= require('../db');
 const { v4: uuidv4 } = require('uuid');
+const { types } = require('pg');
 
 // Configurar los routers
 // Ejemplo: router.use('/auth', authRouter);
@@ -13,7 +14,7 @@ const { v4: uuidv4 } = require('uuid');
 const getApiInfo = async() =>{    //va a llamar al endpoint de la api y me va a traer toda la info que va a necesitar
     // const apiUrl = await axios.get('https://pokeapi.co/api/v2/pokemon') //genero un mapeo para que me devuelva solo lo que yo necesito traerme desde el back para mi aplicación 
     // console.log(apiUrl)
-    let apiUrl = await axios.get("https://pokeapi.co/api/v2/pokemon?offset=0&limit=22")
+    let apiUrl = await axios.get("https://pokeapi.co/api/v2/pokemon?offset=0&limit=40")
             .then((res) => {
                 return res.data.results
             })
@@ -84,58 +85,80 @@ router.get('/pokemon', async (req,res)=>{
     };
 });
 //-----------Obtengo las ocupaciones desde la api externa, luego las guardo en la Base de datos y las empiezo a utilzar desde allí------------------------------
-router.get('/types', async (req, res) => {
-   const getAll = Types.findAll() //traer de la api
-   try{if(getAll){
-            return res.status(200).send(getAll)
-        }else{//de la api llevarlo a la db
-            return res.status(400).send('No se encontró nada en tipos')
-        }//de la db trabajar con eso, mostrarlo
-   }catch(err){
-    console.log(err)
-   }
+router.get('/types', async (req, res, next) => {
+    //traer de la api
+    try{
+        const getAll = await Types.findAll();
+        getAll ? res.status(200).send(getAll) : res.status(404).send('no se muestran los tipos')
+    }catch(err){
+        next(err)
+    }
 });
+
+// try{
+//     const getAll = await Types.findAll()
+//     if(getAll){
+//             return res.status(200).send(getAll)
+//         }else{//de la api llevarlo a la db
+//             return res.status(400).send('No se encontró nada en tipos')
+//         }//de la db trabajar con eso, mostrarlo
 
 
 //Recibo los datos del formulario desde la ruta de creación del personaje por body//crea un nuevo personaje en la base de datos.
-router.post('/pokemon', async(req, res)=>{ //lo que me llega por body
-        try{
-            let{
-                name,
-                nickname,
-                birthday,
-                image, 
-                status,
-                createInDb,    
-                occupation
-            } = req.body
-            console.log(req.body)
-            let characterCreated = await Pokemon.create({ //Creo el personaje
-            id: uuidv4(),
-            name,
-            nickname,
-            birthday,
-            image,
-            status,
-            createInDb
-            //no me traigo la occupacion porque tengo que hacer la relación a parte.
-            }) 
+// router.post('/pokemon', async(req, res)=>{ //lo que me llega por body
+        
+//             let{
+//                 name,
+//                 hp,
+//                 attack,
+//                 defense,
+//                 speed,
+//                 height,
+//                 weight
+//             } = req.body
+
+//             console.log(req.body)
+//             try{
+//             let characterCreated = await Pokemon.findOrCreate({ //Creo el personaje
+//                 where{
+//                 id: uuidv4(),
+//                 name,
+//                 hp,
+//                 attack,
+//                 defense,
+//                 speed,
+//                 height,
+//                 weight,
+//                 img:'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.nicepng.com%2Fs%2Fpokemon%2F&psig=AOvVaw0i50cnBn3Z2GNnznr2YAWK&ust=1636075028559000&source=images&cd=vfe&ved=0CAsQjRxqFwoTCMDgrNDE_fMCFQAAAAAdAAAAABAJ',
+//                 createdIndDb
+//                 },
+//             });
+//             const typesPoke = await Types.findAll({
+//                 where: { name: types },
+//                 default: { name: types },
+//             });
+//             await characterCreated[0].setTypes(typesPoke) //eL 'addOccupation' es un método de sequelize,  lo que hace es traerme de la tabla occupations lo que se pasa por paréntesis.
+//             return res.send(characterCreated[0])
+//         }catch(error){
+//             console.log(error)
+//             return res.status(500).json({error: 'No se pudo crear el personaje'})
+//         }
+//         });        
+
+
+
+
+        
+        //no me traigo types porque tengo que hacer la relación a parte.
             //Acá recién me lo traigo del modelo de ocupación porque así se hizo el PI
-            await characterCreated.addOccupation(occupation) //eL 'addOccupation' es un método de sequelize,  lo que hace es traerme de la tabla occupations lo que se pasa por paréntesis.
             // const occupationDb = await Types.findAll({
             //     where: {name : occupation} //que name sea igual al occupation que me llega por body
             // })
             
-            return res.json(characterCreated)
-        }catch(error){
-            console.log(error)
-            return res.status(500).json({error: 'No se pudo crear el personaje'})
-        }
-});
 
-router.get('/characters/:id', async (req,res) =>{
+router.get('/pokemon/:id', async (req,res) =>{
     const id = req.params.id;
-    const charactersTotal = await getAllCharacters();
+    let charactersTotal = await getAllCharacters();
     if(id){
         let characterId = await charactersTotal.filter(el => el.id == id)
         characterId.length?

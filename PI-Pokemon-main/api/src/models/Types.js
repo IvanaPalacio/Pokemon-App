@@ -13,6 +13,11 @@ sequelize.define('types', {
     //   allowNull: false,
     //   primaryKey: true,
     // }
+    
+    },
+    {
+      timestamps: false,
+      freezeTableName: true,
     });
 };
 
