@@ -85,11 +85,10 @@ router.get('/pokemon', async (req,res)=>{
 });
 //-----------Obtengo las ocupaciones desde la api externa, luego las guardo en la Base de datos y las empiezo a utilzar desde allí------------------------------
 router.get('/types', async (req, res) => {
-   const getAll = Types.findAll() //traer de la api
-   try{if(getAll){
-            return res.status(200).send(getAll)
-        }else{//de la api llevarlo a la db
-            return res.status(400).send('No se encontró nada en tipos')
+   const getAll = await Types.findAll() //traer de la api
+   try{
+    getAll ? res.status(200).send(getAll) : res.status(400).send('No se encontró nada en tipos')
+       //de la api llevarlo a la db  
         }//de la db trabajar con eso, mostrarlo
    }catch(err){
     console.log(err)
